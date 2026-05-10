@@ -1,66 +1,34 @@
-from fastapi import FastAPI, HTTPException
-import uvicorn
-from pydantic import BaseModel
+from fastapi import FastAPI
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
+
+
 
 app = FastAPI()
 
+date = {
+    "email": "abc@gmail.kg",
+    "bio": "Суууууу",
+    "age": 12
+}
 
 
-books = [
-    {
-        "id": 1, 
-        "title": "Асинхронность в Python", 
-        "author": "Мэттью",
-    },
-    {
-        "id": 2,
-        "title": "Накопительный эффект",
-        "author": "Гульмира",
-    },
-]
+class UserSchema(BaseModel):
+    email: EmailStr
+    bio: str | None = Field(max_length=10)
 
-
-
-@app.get(
-    "/books/",
-    tags=["Books"],
-    summary="Получить все книги"
-)
-def read_books():
-    return books
-
-
-@app.get(
-    "/books/{id}",
-    tags=["Books"],
-    summary="Получить конкретную книгу"
-)
-def get_book(id: int):
-    for book in books:
-        if book["id"] == id:
-            return book
-    raise HTTPException(status_code=404, detail="Эй у тебя в базе только 2 книги")
-
-
-class NewBook(BaseModel):
-    title: str
-    author: str
-
-
-@app.post("/books", 
-    tags=["Books"],
-)
-def  create_book(new_book: NewBook):
-    books.append({
-        "id": len(books)+1,
-        "title": new_book.title,
-        "author": new_book.author
-    })
-    return {"success": True}
+    model_config = ConfigDict(extra='forbid')
 
 
 
+users = []
 
 
-if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+@app.post("/users")
+def add_user(user: UserSchema):
+    users.append(user)
+    return {"ok": True}
+
+
+@app.get("/users")
+def get_user() -> list[UserSchema]:
+    return users
